@@ -1,29 +1,26 @@
-/**
- *  @file
- *  @copyright defined in eos/LICENSE.txt
- */
-#include <eosio.system/eosio.system.hpp>
+#include <eosio/crypto.hpp>
+#include <eosio/datastream.hpp>
+#include <eosio/eosio.hpp>
+#include <eosio/multi_index.hpp>
+#include <eosio/privileged.hpp>
+#include <eosio/serialize.hpp>
+#include <eosio/singleton.hpp>
 
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/crypto.h>
-#include <eosiolib/datastream.hpp>
-#include <eosiolib/serialize.hpp>
-#include <eosiolib/multi_index.hpp>
-#include <eosiolib/privileged.hpp>
-#include <eosiolib/singleton.hpp>
-#include <eosiolib/transaction.hpp>
+#include <eosio.system/eosio.system.hpp>
 #include <eosio.token/eosio.token.hpp>
 
 #include <algorithm>
 #include <cmath>
 
 namespace eosiosystem {
-   using eosio::indexed_by;
-   using eosio::const_mem_fun;
-   using eosio::singleton;
-   using eosio::transaction;
 
-   void system_contract::regproducer( const name producer, const eosio::public_key& producer_key, const std::string& url, uint16_t location ) {
+   using eosio::const_mem_fun;
+   using eosio::current_time_point;
+   using eosio::indexed_by;
+   using eosio::microseconds;
+   using eosio::singleton;
+
+   void system_contract::regproducer( const name producer, const public_key& producer_key, const std::string& url, uint16_t location ) {
       check( url.size() < 512, "url too long" );
       check( producer_key != eosio::public_key(), "public key should not be the default value" );
       require_auth( producer );
@@ -63,7 +60,7 @@ namespace eosiosystem {
       });
    }
 
-   void system_contract::update_elected_producers( block_timestamp block_time ) {
+   void system_contract::update_elected_producers( const block_timestamp& block_time ) {
       _gstate.last_producer_schedule_update = block_time;
 
       auto idx = _producers.get_index<"prototalvote"_n>();
@@ -85,14 +82,12 @@ namespace eosiosystem {
       for( const auto& item : top_producers )
          producers.push_back(item);
 
-      auto packed_schedule = pack(producers);
-
-      if( set_proposed_producers( packed_schedule.data(),  packed_schedule.size() ) >= 0 ) {
+      if( set_proposed_producers( producers ) >= 0 ) {
          _gstate.last_producer_schedule_size = static_cast<decltype(_gstate.last_producer_schedule_size)>( top_producers.size() );
       }
    }
 
-   void system_contract::voteproducer( const name voter_name, const name , const std::vector<name>& producers ) {
+   void system_contract::voteproducer( const name& voter_name, const name& proxy, const std::vector<name>& producers ) {
       require_auth( voter_name );
       check( producers.size() <= 30, "attempt to vote for too many producers" );
       for( size_t i = 1; i < producers.size(); ++i ) {

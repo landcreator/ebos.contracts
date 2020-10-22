@@ -1,4 +1,9 @@
-add_contract(eosio.system eosio.system ${CMAKE_CURRENT_SOURCE_DIR}/src/eosio.system.cpp)
+add_contract(eosio.system eosio.system
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/eosio.system.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/delegate_bandwidth.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/native.cpp
+   ${CMAKE_CURRENT_SOURCE_DIR}/src/voting.cpp
+)
 
 target_include_directories(eosio.system
    PUBLIC

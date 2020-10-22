@@ -1,85 +1,34 @@
-/**
- *  @file
- *  @copyright defined in eos/LICENSE.txt
- */
+#include <eosio/datastream.hpp>
+#include <eosio/eosio.hpp>
+#include <eosio/multi_index.hpp>
+#include <eosio/privileged.hpp>
+#include <eosio/serialize.hpp>
+#include <eosio/transaction.hpp>
+
 #include <eosio.system/eosio.system.hpp>
-
-#include <eosiolib/eosio.hpp>
-#include <eosiolib/datastream.hpp>
-#include <eosiolib/serialize.hpp>
-#include <eosiolib/multi_index.hpp>
-#include <eosiolib/privileged.h>
-#include <eosiolib/transaction.hpp>
-
 #include <eosio.token/eosio.token.hpp>
 
-#include <cmath>
-#include <map>
-
 namespace eosiosystem {
+
    using eosio::asset;
-   using eosio::indexed_by;
    using eosio::const_mem_fun;
+   using eosio::current_time_point;
+   using eosio::indexed_by;
    using eosio::permission_level;
+   using eosio::seconds;
    using eosio::time_point_sec;
-   using std::map;
-   using std::pair;
+   using eosio::token;
 
-   static constexpr uint32_t refund_delay_sec = 3*24*3600;
+   void system_contract::buyrambytes( const name& payer, const name& receiver, uint32_t bytes ) {
+      check( bytes == 0, "buyrambytes action's bytes must be zero ");
+   }
 
-   struct [[eosio::table, eosio::contract("eosio.system")]] user_resources {
-      name          owner;
-      asset         net_weight;
-      asset         cpu_weight;
-      int64_t       ram_bytes = 0;
+   void system_contract::buyram( const name& payer, const name& receiver, const asset& quant )
+   {
+      check( quant.amount == 0, "buyram action's asset.amount must be zero ");
+   }
 
-      bool is_empty()const { return cpu_weight.amount == 0 ; }
-      uint64_t primary_key()const { return owner.value; }
-
-      // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( user_resources, (owner)(net_weight)(cpu_weight)(ram_bytes) )
-   };
-
-
-   /**
-    *  Every user 'from' has a scope/table that uses every receipient 'to' as the primary key.
-    */
-   struct [[eosio::table, eosio::contract("eosio.system")]] delegated_bandwidth {
-      name          from;
-      name          to;
-      asset         net_weight;
-      asset         cpu_weight;
-
-      bool is_empty()const { return cpu_weight.amount == 0; }
-      uint64_t  primary_key()const { return to.value; }
-
-      // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( delegated_bandwidth, (from)(to)(net_weight)(cpu_weight) )
-
-   };
-
-   struct [[eosio::table, eosio::contract("eosio.system")]] refund_request {
-      name            owner;
-      time_point_sec  request_time;
-      eosio::asset    net_amount;
-      eosio::asset    cpu_amount;
-
-      bool is_empty()const { return cpu_amount.amount == 0; }
-      uint64_t  primary_key()const { return owner.value; }
-
-      // explicit serialization macro is not necessary, used here only to improve compilation time
-      EOSLIB_SERIALIZE( refund_request, (owner)(request_time)(net_amount)(cpu_amount) )
-   };
-
-   /**
-    *  These tables are designed to be constructed in the scope of the relevant user, this
-    *  facilitates simpler API for per-user queries
-    */
-   typedef eosio::multi_index< "userres"_n, user_resources >      user_resources_table;
-   typedef eosio::multi_index< "delband"_n, delegated_bandwidth > del_bandwidth_table;
-   typedef eosio::multi_index< "refunds"_n, refund_request >      refunds_table;
-
-   void system_contract::changebw( name from, name receiver, const asset stake_cpu_delta, bool transfer )
+   void system_contract::changebw( name from, const name& receiver, const asset& stake_cpu_delta, bool transfer )
    {
       require_auth( from );
       check( stake_cpu_delta.amount != 0, "should stake non-zero stake_cpu_delta.amount" );
@@ -127,7 +76,7 @@ namespace eosiosystem {
          }
 
          check( 0 <= tot_itr->cpu_weight.amount, "insufficient staked total cpu bandwidth" );
-         set_resource_limits_cpu( receiver.value, tot_itr->cpu_weight.amount );
+         set_resource_limits_cpu( receiver, tot_itr->cpu_weight.amount );
          if ( tot_itr->is_empty() ) {
             totals_tbl.erase( tot_itr );
          }
@@ -186,18 +135,16 @@ namespace eosiosystem {
             eosio::transaction out;
             out.actions.emplace_back( permission_level{from, active_permission},  _self, "refund"_n,  from );
             out.delay_sec = refund_delay_sec;
-            cancel_deferred( from.value );
+            eosio::cancel_deferred( from.value );
             out.send( from.value, from, true );
          } else {
-            cancel_deferred( from.value );
+            eosio::cancel_deferred( from.value );
          }
 
          auto transfer_amount = cpu_balance;
          if ( 0 < transfer_amount.amount ) {
-            INLINE_ACTION_SENDER(eosio::token, transfer)(
-               token_account, { {source_stake_from, active_permission} },
-               { source_stake_from, stake_account, asset(transfer_amount), std::string("stake bandwidth") }
-            );
+            token::transfer_action transfer_act{ token_account, { {source_stake_from, active_permission} } };
+            transfer_act.send( source_stake_from, stake_account, asset(transfer_amount), "stake bandwidth" );
          }
       }
 
@@ -235,9 +182,9 @@ namespace eosiosystem {
       }
    }
 
-   void system_contract::delegatebw( name from, name receiver,
-                                     asset stake_net_quantity,
-                                     asset stake_cpu_quantity, bool transfer ) {
+   void system_contract::delegatebw( const name& from, const name& receiver,
+                                     const asset& stake_net_quantity,
+                                     const asset& stake_cpu_quantity, bool transfer ) {
       asset zero_asset( 0, core_symbol() );
       check( stake_net_quantity == zero_asset, "stake_net_quantity must be zero asset" );
       check( stake_cpu_quantity >  zero_asset, "must stake a positive amount" );
@@ -252,35 +199,30 @@ namespace eosiosystem {
       delegatebw( from, receiver, zero_asset, stake_cpu_quantity, transfer );
    }
 
-   void system_contract::undelegatebw( name from, name receiver,
-                                       asset unstake_net_quantity,
-                                       asset unstake_cpu_quantity ) {
+   void system_contract::undelegatebw( const name& from, const name& receiver,
+                                       const asset& unstake_net_quantity, const asset& unstake_cpu_quantity ){
       asset zero_asset( 0, core_symbol() );
       check( unstake_net_quantity == zero_asset, "unstake_net_quantity must be zero asset" );
       check( unstake_cpu_quantity >  zero_asset, "must unstake a positive amount" );
       check( unstake_cpu_quantity.amount + unstake_net_quantity.amount > 0, "must unstake a positive amount" );
 
       changebw( from, receiver, -unstake_cpu_quantity, false);
-   }
+   } // undelegatebw
 
    void system_contract::undlgtcpu( name from, name receiver, asset unstake_cpu_quantity ){
       asset zero_asset( 0, core_symbol() );
       undelegatebw( from, receiver, zero_asset, unstake_cpu_quantity );
    }
 
-   void system_contract::refund( const name owner ) {
+   void system_contract::refund( const name& owner ) {
       require_auth( owner );
 
-      refunds_table refunds_tbl( _self, owner.value );
+      refunds_table refunds_tbl( get_self(), owner.value );
       auto req = refunds_tbl.find( owner.value );
       check( req != refunds_tbl.end(), "refund request not found" );
       check( req->request_time + seconds(refund_delay_sec) <= current_time_point(), "refund is not available yet" );
-
-      INLINE_ACTION_SENDER(eosio::token, transfer)(
-         token_account, { {stake_account, active_permission}, {req->owner, active_permission} },
-         { stake_account, req->owner, req->cpu_amount, std::string("unstake") }
-      );
-
+      token::transfer_action transfer_act{ token_account, { {stake_account, active_permission}, {req->owner, active_permission} } };
+      transfer_act.send( stake_account, req->owner, req->cpu_amount, "unstake" );
       refunds_tbl.erase( req );
    }
 
