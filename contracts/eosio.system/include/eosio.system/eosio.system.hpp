@@ -445,7 +445,6 @@ namespace eosiosystem {
       private:
          //defined in eosio.system.cpp
          static eosio_global_state  get_default_parameters();
-         static time_point current_time_point();
          symbol core_symbol()const;
 
          //defined in delegate_bandwidth.cpp
