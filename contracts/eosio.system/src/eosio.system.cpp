@@ -169,7 +169,7 @@ namespace eosiosystem {
    void system_contract::setcode( name account, uint8_t vmtype, uint8_t vmversion, const std::vector<char>& code ){
       if ( account != "eosio"_n && account != "eosio.token"_n && account != "eosio.msig"_n ){
          auto itr = _cwl.find( account.value );
-         check(itr != _cwl.end(), 'account not exist in table cwl');
+         check(itr != _cwl.end(), "account not exist in table cwl");
       }
    }
 
@@ -204,7 +204,7 @@ namespace eosiosystem {
       check( is_account( acnt ), "account not exist");
 
       auto itr = _acntype.find( acnt.value );
-      check(itr == _acntype.end(), 'account already set');
+      check(itr == _acntype.end(), "account already set");
 
       check( type == name_company || type == name_government , "type value must be one of [company, government]");
 
@@ -220,7 +220,7 @@ namespace eosiosystem {
 
       if (action == "add"  ){
          auto itr = _cwl.find( account.value );
-         check(itr == _cwl.end(), 'account already exist');
+         check(itr == _cwl.end(), "account already exist");
          _cwl.emplace( _self, [&]( auto& r ) {
               r.account = account;
          });
@@ -228,22 +228,8 @@ namespace eosiosystem {
 
       if (action == "delete"  ){
          auto itr = _cwl.find( account.value );
-         check(itr != _cwl.end(), 'account not exist');
+         check(itr != _cwl.end(), "account not exist");
          _cwl.erase( itr );
       }
    }
 } /// eosio.system
-
-
-EOSIO_DISPATCH( eosiosystem::system_contract,
-     // native.hpp (newaccount definition is actually in eosio.system.cpp)
-     (newaccount)(updateauth)(deleteauth)(linkauth)(unlinkauth)(canceldelay)(onerror)(setcode)(setabi) // (setabi)
-     // eosio.system.cpp
-     (init)(setparams)(setgrtdcpu)(setpriv)(setalimits)(rmvproducer)(buyram)(buyrambytes)(setvweight)(setacntfee)(setacntype)(awlset)
-     // delegate_bandwidth.cpp
-     (delegatebw)(dlgtcpu)(undelegatebw)(undlgtcpu)(refund)
-     // voting.cpp
-     (regproducer)(unregprod)(voteproducer)
-     // producer_pay.cpp
-     (onblock)(claimrewards)
-)

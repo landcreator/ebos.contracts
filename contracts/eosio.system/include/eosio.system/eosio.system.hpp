@@ -13,14 +13,6 @@
 #include <string>
 #include <type_traits>
 
-#ifdef CHANNEL_RAM_AND_NAMEBID_FEES_TO_REX
-#undef CHANNEL_RAM_AND_NAMEBID_FEES_TO_REX
-#endif
-// CHANNEL_RAM_AND_NAMEBID_FEES_TO_REX macro determines whether ramfee and namebid proceeds are
-// channeled to REX pool. In order to stop these proceeds from being channeled, the macro must
-// be set to 0.
-#define CHANNEL_RAM_AND_NAMEBID_FEES_TO_REX 1
-
 namespace eosiosystem {
 
    using eosio::asset;
@@ -368,9 +360,6 @@ namespace eosiosystem {
          void buyrambytes( const name& payer, const name& receiver, uint32_t bytes );
 
          [[eosio::action]]
-         void sellram( const name& account, int64_t bytes );
-
-         [[eosio::action]]
          void refund( const name& owner );
 
          [[eosio::action]]
@@ -380,9 +369,6 @@ namespace eosiosystem {
          void unregprod( const name producer );
 
          [[eosio::action]]
-         void setram( uint64_t max_ram_size );
-
-         [[eosio::action]]
          void voteproducer( const name& voter, const name& proxy, const std::vector<name>& producers );
 
          [[eosio::action]]
@@ -390,9 +376,6 @@ namespace eosiosystem {
 
          [[eosio::action]]
          void setgrtdcpu( uint32_t cpu );
-
-         [[eosio::action]]
-         void claimrewards( const name& owner );
 
          [[eosio::action]]
          void setpriv( const name& account, uint8_t is_priv );
@@ -426,6 +409,39 @@ namespace eosiosystem {
                           const name&       newact,
                           ignore<authority> owner,
                           ignore<authority> active );
+
+         [[eosio::action]]
+         void claimrewards( const name& owner );
+
+
+
+         using init_action = eosio::action_wrapper<"init"_n, &system_contract::init>;
+         using activate_action = eosio::action_wrapper<"activate"_n, &system_contract::activate>;
+         using delegatebw_action = eosio::action_wrapper<"delegatebw"_n, &system_contract::delegatebw>;
+         using dlgtcpu_action = eosio::action_wrapper<"dlgtcpu"_n, &system_contract::dlgtcpu>;
+         using undlgtcpu_action = eosio::action_wrapper<"undlgtcpu"_n, &system_contract::undlgtcpu>;
+         using undelegatebw_action = eosio::action_wrapper<"undelegatebw"_n, &system_contract::undelegatebw>;
+         using buyram_action = eosio::action_wrapper<"buyram"_n, &system_contract::buyram>;
+         using buyrambytes_action = eosio::action_wrapper<"buyrambytes"_n, &system_contract::buyrambytes>;
+         using refund_action = eosio::action_wrapper<"refund"_n, &system_contract::refund>;
+         using regproducer_action = eosio::action_wrapper<"regproducer"_n, &system_contract::regproducer>;
+         using unregprod_action = eosio::action_wrapper<"unregprod"_n, &system_contract::unregprod>;
+         using voteproducer_action = eosio::action_wrapper<"voteproducer"_n, &system_contract::voteproducer>;
+         using rmvproducer_action = eosio::action_wrapper<"rmvproducer"_n, &system_contract::rmvproducer>;
+         using updtrevision_action = eosio::action_wrapper<"updtrevision"_n, &system_contract::updtrevision>;
+         using setpriv_action = eosio::action_wrapper<"setpriv"_n, &system_contract::setpriv>;
+         using setalimits_action = eosio::action_wrapper<"setalimits"_n, &system_contract::setalimits>;
+         using setparams_action = eosio::action_wrapper<"setparams"_n, &system_contract::setparams>;
+         using claimrewards_action = eosio::action_wrapper<"claimrewards"_n, &system_contract::claimrewards>;
+
+         using setgrtdcpu_action = eosio::action_wrapper<"setgrtdcpu"_n, &system_contract::setgrtdcpu>;
+         using setvweight_action = eosio::action_wrapper<"setvweight"_n, &system_contract::setvweight>;
+         using setacntfee_action = eosio::action_wrapper<"setacntfee"_n, &system_contract::setacntfee>;
+         using awlset_action = eosio::action_wrapper<"awlset"_n, &system_contract::awlset>;
+         using setcode_action = eosio::action_wrapper<"setcode"_n, &system_contract::setcode>;
+         using setacntype_action = eosio::action_wrapper<"setacntype"_n, &system_contract::setacntype>;
+         using newaccount_action = eosio::action_wrapper<"newaccount"_n, &system_contract::newaccount>;
+
       private:
          //defined in eosio.system.cpp
          static eosio_global_state  get_default_parameters();
