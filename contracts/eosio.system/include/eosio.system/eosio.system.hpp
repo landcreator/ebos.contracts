@@ -398,8 +398,6 @@ namespace eosiosystem {
          [[eosio::action]]
          void updtrevision( uint8_t revision );
 
-         [[eosio::action]]
-         void activate( const eosio::checksum256& feature_digest );
 
          [[eosio::action]]
          void setacntype( name account, name type );
@@ -413,10 +411,7 @@ namespace eosiosystem {
          [[eosio::action]]
          void claimrewards( const name& owner );
 
-
-
          using init_action = eosio::action_wrapper<"init"_n, &system_contract::init>;
-         using activate_action = eosio::action_wrapper<"activate"_n, &system_contract::activate>;
          using delegatebw_action = eosio::action_wrapper<"delegatebw"_n, &system_contract::delegatebw>;
          using dlgtcpu_action = eosio::action_wrapper<"dlgtcpu"_n, &system_contract::dlgtcpu>;
          using undlgtcpu_action = eosio::action_wrapper<"undlgtcpu"_n, &system_contract::undlgtcpu>;

@@ -10,34 +10,6 @@
 // This header is needed until `is_feature_activiated` and `preactivate_feature` are added to `eosio.cdt`
 #include <eosio/../../capi/eosio/crypto.h>
 
-namespace eosio {
-   namespace internal_use_do_not_use {
-      extern "C" {
-         __attribute__((eosio_wasm_import))
-         bool is_feature_activated( const ::capi_checksum256* feature_digest );
-
-         __attribute__((eosio_wasm_import))
-         void preactivate_feature( const ::capi_checksum256* feature_digest );
-      }
-   }
-}
-
-namespace eosio {
-   bool is_feature_activated( const eosio::checksum256& feature_digest ) {
-      auto feature_digest_data = feature_digest.extract_as_byte_array();
-      return internal_use_do_not_use::is_feature_activated(
-         reinterpret_cast<const ::capi_checksum256*>( feature_digest_data.data() )
-      );
-   }
-
-   void preactivate_feature( const eosio::checksum256& feature_digest ) {
-      auto feature_digest_data = feature_digest.extract_as_byte_array();
-      internal_use_do_not_use::preactivate_feature(
-         reinterpret_cast<const ::capi_checksum256*>( feature_digest_data.data() )
-      );
-   }
-}
-
 /**
  * EOSIO Contracts
  *
@@ -308,26 +280,6 @@ namespace eosio {
          [[eosio::action]]
          void reqauth( name from );
 
-         /**
-          * Activates a protocol feature.
-          *
-          * @details Activates a protocol feature
-          *
-          * @param feature_digest - hash of the protocol feature to activate.
-          */
-         [[eosio::action]]
-         void activate( const eosio::checksum256& feature_digest );
-
-         /**
-          * Asserts that a protocol feature has been activated.
-          *
-          * @details Asserts that a protocol feature has been activated
-          *
-          * @param feature_digest - hash of the protocol feature to check for activation.
-          */
-         [[eosio::action]]
-         void reqactivated( const eosio::checksum256& feature_digest );
-
          struct [[eosio::table]] abi_hash {
             name              owner;
             checksum256       hash;
@@ -351,7 +303,5 @@ namespace eosio {
          using setprods_action = action_wrapper<"setprods"_n, &bios::setprods>;
          using setparams_action = action_wrapper<"setparams"_n, &bios::setparams>;
          using reqauth_action = action_wrapper<"reqauth"_n, &bios::reqauth>;
-         using activate_action = action_wrapper<"activate"_n, &bios::activate>;
-         using reqactivated_action = action_wrapper<"reqactivated"_n, &bios::reqactivated>;
    };
 }
