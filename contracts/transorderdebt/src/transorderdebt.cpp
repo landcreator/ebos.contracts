@@ -8,17 +8,14 @@ namespace eosio{
     check( is_account( from ), "from account does not exist");
     check( is_account( to ), "to account does not exist");
 
-    require_recipient( from );
-    require_recipient( to );
-
     check( quantity.is_valid(), "invalid quantity" );
     check( fee.is_valid(), "invalid quantity" );
     check( quantity.amount > 0, "must transfer positive quantity" );
-    check( fee.amount > 0, "must transfer positive quantity" );
+    check( fee.amount >= 0, "must transfer positive quantity" );
     check( quantity.symbol == fee.symbol, "symbol precision mismatch" );
     check( memo.size() <= 256, "memo has more than 256 bytes" );
 
-    transrecord_index transrecords(get_self(), get_first_receiver().value);
+    transrecord_index transrecords(get_self(), get_self().value);
 
     auto trans_id_index = transrecords.get_index<name("bytransid")>();
 
@@ -53,7 +50,7 @@ namespace eosio{
   void transorderdebt::transerase(checksum256 trans_id){
     require_auth(get_self());
 
-    transrecord_index transrecords(get_self(), get_first_receiver().value);
+    transrecord_index transrecords(get_self(), get_self().value);
 
     auto trans_id_index = transrecords.get_index<name("bytransid")>();
 
@@ -69,7 +66,7 @@ namespace eosio{
 
  		require_auth( get_self() );
 
- 		order_index orders(get_self(), get_first_receiver().value);
+ 		order_index orders(get_self(), get_self().value);
 
  		auto order_id_index = orders.get_index<name("byorderid")>();
 
@@ -103,7 +100,7 @@ namespace eosio{
 
  		require_auth( get_self() );
 
- 		order_index orders(get_self(), get_first_receiver().value);
+ 		order_index orders(get_self(), get_self().value);
 
  		auto order_id_index = orders.get_index<name("byorderid")>();
 
@@ -122,16 +119,13 @@ namespace eosio{
     check( is_account( debtor ), "debtor account does not exist");
     check( is_account( creditor ), "creditor account does not exist");
 
-    require_recipient( debtor );
-    require_recipient( creditor );
-
     check( quantity.is_valid(), "invalid quantity" );
     check( fee.is_valid(), "invalid quantity" );
     check( quantity.amount > 0, "must transfer positive quantity" );
-    check( fee.amount > 0, "must transfer positive quantity" );
+    check( fee.amount >= 0, "must transfer positive quantity" );
     check( quantity.symbol == fee.symbol, "symbol precision mismatch" );
 
-    debt_index debts(get_self(), get_first_receiver().value);
+    debt_index debts(get_self(), get_self().value);
 
     auto debt_id_index = debts.get_index<name("bydebtid")>();
 
@@ -168,7 +162,7 @@ namespace eosio{
   void transorderdebt::debterase(uint128_t debt_id){
     require_auth(get_self());
 
-    debt_index debts(get_self(), get_first_receiver().value);
+    debt_index debts(get_self(), get_self().value);
 
     auto debt_id_index = debts.get_index<name("bydebtid")>();
 
