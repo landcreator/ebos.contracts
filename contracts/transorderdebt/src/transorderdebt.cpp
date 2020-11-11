@@ -1,7 +1,7 @@
 #include <transorderdebt/transorderdebt.hpp>
 
 namespace eosio{
-  void transorderdebt::transupsert(checksum256 trans_id, name from, name to, asset quantity, std::string memo, asset fee){
+  void transorderdebt::transupsert(checksum256 trans_id, name from, name to, asset quantity, std::string memo, asset fee, std::string timestamp){
     require_auth(get_self());
 
     check( from != to, "cannot transfer to self" );
@@ -30,7 +30,7 @@ namespace eosio{
         row.quantity = quantity;
         row.memo = memo;
         row.fee = fee;
-        row.timestamp = current_block_time();
+        row.timestamp = timestamp;
       });
     }
     else{
@@ -41,7 +41,7 @@ namespace eosio{
         row.quantity = quantity;
         row.memo = memo;
         row.fee = fee;
-        row.timestamp = current_block_time();
+        row.timestamp = timestamp;
       });
     }
   }
@@ -62,7 +62,7 @@ namespace eosio{
   }
 
 
- 	void transorderdebt::orderupsert(uint128_t order_id, name account, std::string logistics, std::string goods_info, name merchant){
+ 	void transorderdebt::orderupsert(uint128_t order_id, name account, std::string logistics, std::string goods_info, name merchant, std::string timestamp){
 
  		require_auth( get_self() );
 
@@ -81,7 +81,7 @@ namespace eosio{
         	row.logistics = logistics;
         	row.goods_info = goods_info;
         	row.merchant = merchant;
-        	row.timestamp = current_block_time();
+        	row.timestamp = timestamp;
 	      });
 	    }
 	    else {
@@ -91,7 +91,7 @@ namespace eosio{
 	        row.logistics = logistics;
 	        row.goods_info = goods_info;
 	        row.merchant = merchant;
-	        row.timestamp = current_block_time();
+	        row.timestamp = timestamp;
 	      });
 	    }
  	}
@@ -112,18 +112,13 @@ namespace eosio{
  	}
 
 
-  void transorderdebt::debtupsert(uint128_t debt_id, name debtor, name creditor, asset quantity, asset fee, std::map<std::string, std::string> profile){
+  void transorderdebt::debtupsert(uint128_t debt_id, name debtor, asset quantity, std::map<std::string, std::string> profile, std::string timestamp){
     require_auth(get_self());
 
-    check( debtor != creditor, "debtor and creditor cannot be same one" );
     check( is_account( debtor ), "debtor account does not exist");
-    check( is_account( creditor ), "creditor account does not exist");
 
     check( quantity.is_valid(), "invalid quantity" );
-    check( fee.is_valid(), "invalid quantity" );
     check( quantity.amount > 0, "must transfer positive quantity" );
-    check( fee.amount >= 0, "must transfer positive quantity" );
-    check( quantity.symbol == fee.symbol, "symbol precision mismatch" );
 
     debt_index debts(get_self(), get_self().value);
 
@@ -136,24 +131,20 @@ namespace eosio{
         row.pkey = debts.available_primary_key();
         row.debt_id = debt_id;
         row.debtor = debtor;
-        row.creditor = creditor;
         row.quantity = quantity;
-        row.fee = fee;
         row.profile.clear();
         row.profile = profile;
-        row.timestamp = current_block_time();
+        row.timestamp = timestamp;
       });
     }
     else{
       debts.modify(*iterator, get_self(), [&](auto& row){
         row.debt_id = debt_id;
         row.debtor = debtor;
-        row.creditor = creditor;
         row.quantity = quantity;
-        row.fee = fee;
         row.profile.clear();
         row.profile = profile;
-        row.timestamp = current_block_time();
+        row.timestamp = timestamp;
       });
     }
   }

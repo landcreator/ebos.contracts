@@ -10,19 +10,19 @@ namespace eosio{
       using contract::contract;
 
       [[eosio::action]]
-      void transupsert(checksum256 trans_id, name from, name to, asset quantity, std::string memo, asset fee);
+      void transupsert(checksum256 trans_id, name from, name to, asset quantity, std::string memo, asset fee, std::string timestamp);
 
       [[eosio::action]]
       void transerase(checksum256 trans_id);
 
       [[eosio::action]]
-      void orderupsert(uint128_t order_id, name account, std::string logistics, std::string goods_info, name merchant);
+      void orderupsert(uint128_t order_id, name account, std::string logistics, std::string goods_info, name merchant, std::string timestamp);
 
       [[eosio::action]]
       void ordererase(uint128_t order_id);
 
       [[eosio::action]]
-      void debtupsert(uint128_t debt_id, name debtor, name creditor, asset quantity, asset fee, std::map<std::string, std::string> profile);
+      void debtupsert(uint128_t debt_id, name debtor, asset quantity, std::map<std::string, std::string> profile, std::string timestamp);
 
       [[eosio::action]]
       void debterase(uint128_t debt_id);
@@ -51,7 +51,7 @@ namespace eosio{
         asset quantity;
         std::string memo;
         asset fee;
-        block_timestamp timestamp;
+        std::string timestamp;
 
         uint64_t primary_key() const { return pkey; }
         checksum256 get_secondary_1() const { return trans_id; }
@@ -67,7 +67,7 @@ namespace eosio{
         std::string logistics;
         std::string goods_info;
         name merchant;
-        block_timestamp timestamp;
+        std::string timestamp;
 
         uint64_t primary_key() const{ return pkey; }
         uint128_t get_secondary_1() const { return order_id; }
@@ -80,11 +80,9 @@ namespace eosio{
         uint64_t pkey;
         uint128_t debt_id;
         name debtor;
-        name creditor;
         asset quantity;
-        asset fee;
         std::map<std::string, std::string> profile;
-        block_timestamp timestamp;
+        std::string timestamp;
 
         uint64_t primary_key() const { return pkey; }
         uint128_t get_secondary_1() const { return debt_id; }
