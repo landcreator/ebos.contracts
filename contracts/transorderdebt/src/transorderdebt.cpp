@@ -1,7 +1,7 @@
 #include <transorderdebt/transorderdebt.hpp>
 
 namespace eosio{
-  void transorderdebt::transupsert(checksum256 trans_id, name from, name to, asset quantity, std::string memo, asset fee, std::string timestamp){
+  void transorderdebt::transupsert(checksum256 trans_id, name from, name to, asset quantity, string memo, asset fee, string timestamp){
     require_auth(get_self());
 
     check( from != to, "cannot transfer to self" );
@@ -46,7 +46,6 @@ namespace eosio{
     }
   }
 
-
   void transorderdebt::transerase(checksum256 trans_id){
     require_auth(get_self());
 
@@ -62,7 +61,7 @@ namespace eosio{
   }
 
 
- 	void transorderdebt::orderupsert(uint128_t order_id, name account, std::string logistics, std::string goods_info, name merchant, std::string timestamp){
+ 	void transorderdebt::orderupsert(uint128_t order_id, name account, string logistics, string goods_info, name merchant, string timestamp){
 
  		require_auth( get_self() );
 
@@ -112,7 +111,7 @@ namespace eosio{
  	}
 
 
-  void transorderdebt::debtupsert(uint128_t debt_id, name debtor, asset quantity, std::map<std::string, std::string> profile, std::string timestamp){
+  void transorderdebt::debtupsert(uint128_t debt_id, name debtor, asset quantity, map<string, string> profile, string timestamp){
     require_auth(get_self());
 
     check( is_account( debtor ), "debtor account does not exist");
@@ -149,7 +148,6 @@ namespace eosio{
     }
   }
 
-
   void transorderdebt::debterase(uint128_t debt_id){
     require_auth(get_self());
 
@@ -163,4 +161,72 @@ namespace eosio{
 
     debt_id_index.erase(iterator);
   }
+
+
+  void transorderdebt::debtdisup(uint128_t discharge_id, name debtor, name creditor, asset quantity, map<string, string> profile, string timestamp){
+      require_auth(get_self());
+
+      check( is_account( debtor ), "debtor account does not exist");
+      check( is_account( creditor ), "creditor account does not exist");
+
+      check( quantity.is_valid(), "invalid quantity" );
+      check( quantity.amount > 0, "must transfer positive quantity" );
+
+      debt_discharge_index discharges(get_self(), get_self().value);
+
+      std::array<uint128_t, 2> buffer;
+      buffer[0] = discharge_id;
+      buffer[1] = uint128_t(creditor.value);
+      checksum256 hash(buffer);
+
+      auto dis_creditor_index = discharges.get_index<name("bydiscre")>();
+
+      auto iterator = dis_creditor_index.find(hash);
+
+      if( iterator == dis_creditor_index.end()){
+        discharges.emplace(get_self(), [&]( auto& row){
+          row.pkey = discharges.available_primary_key();
+          row.discharge_id = discharge_id;
+          row.debtor = debtor;
+          row.creditor = creditor;
+          row.quantity = quantity;
+          row.profile.clear();
+          row.profile = profile;
+          row.timestamp = timestamp;
+          row.dis_creditor = hash;
+        });
+      }
+      else{
+        discharges.modify(*iterator, get_self(), [&](auto& row){
+          row.discharge_id = discharge_id;
+          row.debtor = debtor;
+          row.creditor = creditor;
+          row.quantity = quantity;
+          row.profile.clear();
+          row.profile = profile;
+          row.timestamp = timestamp;
+          row.dis_creditor = hash;
+        });
+      }
+    }
+
+  void transorderdebt::debtdiserase(uint128_t discharge_id, name creditor){
+    require_auth(get_self());
+
+    debt_discharge_index discharges(get_self(), get_self().value);
+
+    std::array<uint128_t, 2> buffer;
+    buffer[0] = discharge_id;
+    buffer[1] = uint128_t(creditor.value);
+    checksum256 hash(buffer);
+
+    auto dis_creditor_index = discharges.get_index<name("bydiscre")>();
+
+    auto iterator = dis_creditor_index.find(hash);
+
+    check(iterator != dis_creditor_index.end(), "Discharge deb does not exist");
+
+    dis_creditor_index.erase(iterator);
+  }
+
 };
