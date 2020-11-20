@@ -61,7 +61,7 @@ namespace eosio{
   }
 
 
- 	void transorderdebt::orderupsert(uint128_t order_id, name account, string logistics, string goods_info, name merchant, string timestamp){
+ 	void transorderdebt::orderupsert(uint64_t order_id, name account, string logistics, string goods_info, name merchant, string timestamp){
 
  		require_auth( get_self() );
 
@@ -95,7 +95,7 @@ namespace eosio{
 	    }
  	}
 
- 	void transorderdebt::ordererase(uint128_t order_id){
+ 	void transorderdebt::ordererase(uint64_t order_id){
 
  		require_auth( get_self() );
 
@@ -111,7 +111,7 @@ namespace eosio{
  	}
 
 
-  void transorderdebt::debtupsert(uint128_t debt_id, name debtor, asset quantity, map<string, string> profile, string timestamp){
+  void transorderdebt::debtupsert(uint64_t debt_id, name debtor, asset quantity, map<string, string> profile, string timestamp){
     require_auth(get_self());
 
     check( is_account( debtor ), "debtor account does not exist");
@@ -148,7 +148,7 @@ namespace eosio{
     }
   }
 
-  void transorderdebt::debterase(uint128_t debt_id){
+  void transorderdebt::debterase(uint64_t debt_id){
     require_auth(get_self());
 
     debt_index debts(get_self(), get_self().value);
@@ -163,7 +163,7 @@ namespace eosio{
   }
 
 
-  void transorderdebt::debtdisup(uint128_t discharge_id, name debtor, name creditor, asset quantity, map<string, string> profile, string timestamp){
+  void transorderdebt::debtdisup(uint64_t discharge_id, name debtor, name creditor, asset quantity, map<string, string> profile, string timestamp){
       require_auth(get_self());
 
       check( is_account( debtor ), "debtor account does not exist");
@@ -174,14 +174,13 @@ namespace eosio{
 
       debt_discharge_index discharges(get_self(), get_self().value);
 
-      std::array<uint128_t, 2> buffer;
-      buffer[0] = discharge_id;
-      buffer[1] = uint128_t(creditor.value);
-      checksum256 hash(buffer);
+      uint128_t var=discharge_id;
+      var <<= 64;
+      var += creditor.value;
 
       auto dis_creditor_index = discharges.get_index<name("bydiscre")>();
 
-      auto iterator = dis_creditor_index.find(hash);
+      auto iterator = dis_creditor_index.find(var);
 
       if( iterator == dis_creditor_index.end()){
         discharges.emplace(get_self(), [&]( auto& row){
@@ -193,7 +192,7 @@ namespace eosio{
           row.profile.clear();
           row.profile = profile;
           row.timestamp = timestamp;
-          row.dis_creditor = hash;
+          row.dis_creditor = var;
         });
       }
       else{
@@ -205,24 +204,23 @@ namespace eosio{
           row.profile.clear();
           row.profile = profile;
           row.timestamp = timestamp;
-          row.dis_creditor = hash;
+          row.dis_creditor = var;
         });
       }
     }
 
-  void transorderdebt::debtdiserase(uint128_t discharge_id, name creditor){
+  void transorderdebt::debtdiserase(uint64_t discharge_id, name creditor){
     require_auth(get_self());
 
     debt_discharge_index discharges(get_self(), get_self().value);
 
-    std::array<uint128_t, 2> buffer;
-    buffer[0] = discharge_id;
-    buffer[1] = uint128_t(creditor.value);
-    checksum256 hash(buffer);
+    uint128_t var=discharge_id;
+    var <<= 64;
+    var += creditor.value;
 
     auto dis_creditor_index = discharges.get_index<name("bydiscre")>();
 
-    auto iterator = dis_creditor_index.find(hash);
+    auto iterator = dis_creditor_index.find(var);
 
     check(iterator != dis_creditor_index.end(), "Discharge deb does not exist");
 

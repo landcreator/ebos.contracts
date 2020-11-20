@@ -21,22 +21,22 @@ namespace eosio{
       void transerase(checksum256 trans_id);
 
       [[eosio::action]]
-      void orderupsert(uint128_t order_id, name account, string logistics, string goods_info, name merchant, string timestamp);
+      void orderupsert(uint64_t order_id, name account, string logistics, string goods_info, name merchant, string timestamp);
 
       [[eosio::action]]
-      void ordererase(uint128_t order_id);
+      void ordererase(uint64_t order_id);
 
       [[eosio::action]]
-      void debtupsert(uint128_t debt_id, name debtor, asset quantity, map<string, string> profile, string timestamp);
+      void debtupsert(uint64_t debt_id, name debtor, asset quantity, map<string, string> profile, string timestamp);
 
       [[eosio::action]]
-      void debterase(uint128_t debt_id);
+      void debterase(uint64_t debt_id);
 
       [[eosio::action]]
-      void debtdisup(uint128_t discharge_id, name debtor, name creditor, asset quantity, map<string, string> profile, string timestamp);
+      void debtdisup(uint64_t discharge_id, name debtor, name creditor, asset quantity, map<string, string> profile, string timestamp);
 
       [[eosio::action]]
-      void debtdiserase(uint128_t discharge_id, name creditor);
+      void debtdiserase(uint64_t discharge_id, name creditor);
 
 
 
@@ -77,7 +77,7 @@ namespace eosio{
 
       struct [[eosio::table]] order{
         uint64_t pkey;
-        uint128_t order_id;
+        uint64_t order_id;
         name account;
         string logistics;
         string goods_info;
@@ -85,43 +85,43 @@ namespace eosio{
         string timestamp;
 
         uint64_t primary_key() const{ return pkey; }
-        uint128_t get_secondary_1() const { return order_id; }
+        uint64_t get_secondary_1() const { return order_id; }
       };
 
       using order_index = eosio::multi_index<"orders"_n, order, indexed_by<"byorderid"_n, const_mem_fun<order,
-      uint128_t, &order::get_secondary_1>>>;
+      uint64_t, &order::get_secondary_1>>>;
 
       struct [[eosio::table]] debt{
         uint64_t pkey;
-        uint128_t debt_id;
+        uint64_t debt_id;
         name debtor;
         asset quantity;
         map<string, string> profile;
         string timestamp;
 
         uint64_t primary_key() const { return pkey; }
-        uint128_t get_secondary_1() const { return debt_id; }
+        uint64_t get_secondary_1() const { return debt_id; }
       };
 
       using debt_index = eosio::multi_index<"debts"_n, debt, indexed_by<"bydebtid"_n, const_mem_fun<debt,
-      uint128_t, &debt::get_secondary_1>>>;
+      uint64_t, &debt::get_secondary_1>>>;
 
       struct [[eosio::table]] dischargedebt{
         uint64_t pkey;
-        uint128_t discharge_id;
+        uint64_t discharge_id;
         name debtor;
         name creditor;
         asset quantity;
         map<string, string> profile;
         string timestamp;
-        checksum256 dis_creditor;
+        uint128_t dis_creditor;
 
         uint64_t primary_key() const { return pkey; }
-        checksum256 get_secondary_1() const { return dis_creditor; }
+        uint128_t get_secondary_1() const { return dis_creditor; }
       };
 
       using debt_discharge_index = eosio::multi_index<"discharges"_n, dischargedebt,
-      indexed_by<"bydiscre"_n, const_mem_fun<dischargedebt, checksum256, &dischargedebt::get_secondary_1>>
+      indexed_by<"bydiscre"_n, const_mem_fun<dischargedebt, uint128_t, &dischargedebt::get_secondary_1>>
       >;
 
   };
